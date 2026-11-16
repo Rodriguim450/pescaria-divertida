@@ -82,19 +82,152 @@ const fishTypes=[{e:"🐟",n:"Tilápia",p:10},{e:"🐠",n:"Peixe colorido",p:15}
 function msg(s){$("log").textContent=s;$("sceneMsg").textContent=s}
 function stats(){$("score").textContent=score;$("count").textContent=count;$("best").textContent=best}
 function stop(){if(raf)cancelAnimationFrame(raf);raf=null}
-function reset(){stop();clearTimeout(waitTimer);clearTimeout(hookWindow);state="idle";tension=20;marker=0;dir=1;fishPos=72;
-$("fish").textContent="🐟";$("fish").style.left=fishPos+"%";$("line").hidden=true;$("bubble").textContent="〰️";
-$("cast").disabled=false;$("reel").disabled=true;$("hook").disabled=true;$("tension").style.width="20%";$("tension").style.background="#35a86b";$("marker").style.left="0%";msg("Sua pescaria ainda não começou.");}
-function cast(){if(state!=="idle")return;state="waiting";$("cast").disabled=true;$("line").hidden=false;$("fish").textContent="🐟";$("bubble").textContent="🫧";msg("Isca na água... espere o peixe morder!");
-waitTimer=setTimeout(()=>{if(state!=="waiting")return;state="bite";msg("🐟 O PEIXE MORDEU! Acerte a faixa verde para fisgar!");$("hook").disabled=false;startMarker();hookWindow=setTimeout(()=>{if(state==="bite"){state="idle";$("hook").disabled=true;$("cast").disabled=false;$("line").hidden=true;msg("O peixe escapou! Tente lançar a isca novamente.");}},6500);},1800+Math.random()*2500);}
-function startMarker(){function move(){if(state!=="bite")return;marker+=dir*1.3;if(marker>=96){marker=96;dir=-1}if(marker<=0){marker=0;dir=1}$("marker").style.left=marker+"%";raf=requestAnimationFrame(move)}move();}
-function hook(){if(state!=="bite")return;stop();clearTimeout(hookWindow);$("hook").disabled=true;const good=marker>=64&&marker<=82;if(!good){state="idle";$("cast").disabled=false;$("line").hidden=true;msg("Quase! A fisgada não encaixou e o peixe escapou. Tente de novo.");return;}
-state="fighting";$("reel").disabled=false;msg("Fisgou! Agora segure “Puxar linha” em toques curtos e controle a tensão.");tension=25;fightLoop();}
-function fightLoop(){let phase=0;function tick(){if(state!=="fighting")return;phase++;fishPos+=Math.sin(phase/8)*.7;fishPos=Math.max(5,Math.min(85,fishPos));$("fish").style.left=fishPos+"%";if(!$("reel").matches(":active"))tension=Math.max(12,tension-0.55);if(tension>=100){state="idle";$("reel").disabled=true;$("cast").disabled=false;$("line").hidden=true;msg("A linha arrebentou! Na próxima, puxe em intervalos curtos.");return;}
-$("tension").style.width=tension+"%";$("tension").style.background=tension>75?"#df5a48":tension>50?"#e6a23c":"#35a86b";raf=requestAnimationFrame(tick);}tick();}
-function reel(){if(state!=="fighting")return;tension=Math.min(100,tension+13);if(fishPos>50)fishPos-=5;else fishPos-=3;$("fish").style.left=Math.max(4,fishPos)+"%";if(fishPos<=8){win();}}
-function win(){state="idle";stop();$("reel").disabled=true;$("cast").disabled=false;$("line").hidden=true;const f=fishTypes[Math.floor(Math.random()*fishTypes.length)];score+=f.p;count++;best=Math.max(best,score);stats();$("fish").textContent=f.e;$("bubble").textContent="✨";msg("Você pescou: "+f.n+"! +"+f.p+" pontos. Parabéns!");const row=document.createElement("div");row.className="catch";row.textContent=f.e+" "+f.n+" — "+f.p+" pontos";$("collection").prepend(row);tension=15;$("tension").style.width="15%";}
-$("cast").addEventListener("click",cast);$("hook").addEventListener("click",hook);$("reel").addEventListener("click",reel);$("reset").addEventListener("click",()=>{score=0;count=0;stats();$("collection").innerHTML="";reset();});
+function resetFishAndBars(){
+  fishPos=72;
+  tension=20;
+  marker=0;
+  dir=1;
+  $("fish").textContent="🐟";
+  $("fish").style.left=fishPos+"%";
+  $("tension").style.width="20%";
+  $("tension").style.background="#35a86b";
+  $("marker").style.left="0%";
+}
+function reset(){
+  stop();
+  clearTimeout(waitTimer);
+  clearTimeout(hookWindow);
+  state="idle";
+  resetFishAndBars();
+  $("line").hidden=true;
+  $("bubble").textContent="〰️";
+  $("cast").disabled=false;
+  $("reel").disabled=true;
+  $("hook").disabled=true;
+  msg("Sua pescaria ainda não começou.");
+}
+function cast(){
+  if(state!=="idle")return;
+  state="waiting";
+  resetFishAndBars();
+  $("cast").disabled=true;
+  $("line").hidden=false;
+  $("bubble").textContent="🫧";
+  msg("Isca na água... espere o peixe morder!");
+  waitTimer=setTimeout(()=>{
+    if(state!=="waiting")return;
+    state="bite";
+    msg("🐟 O PEIXE MORDEU! Acerte a faixa verde para fisgar!");
+    $("hook").disabled=false;
+    startMarker();
+    hookWindow=setTimeout(()=>{
+      if(state==="bite"){
+        stop();
+        state="idle";
+        $("hook").disabled=true;
+        $("cast").disabled=false;
+        $("line").hidden=true;
+        $("bubble").textContent="〰️";
+        resetFishAndBars();
+        msg("O peixe escapou! Tente lançar a isca novamente.");
+      }
+    },6500);
+  },1800+Math.random()*2500);
+}
+function startMarker(){
+  function move(){
+    if(state!=="bite")return;
+    marker+=dir*1.3;
+    if(marker>=96){marker=96;dir=-1}
+    if(marker<=0){marker=0;dir=1}
+    $("marker").style.left=marker+"%";
+    raf=requestAnimationFrame(move);
+  }
+  move();
+}
+function hook(){
+  if(state!=="bite")return;
+  stop();
+  clearTimeout(hookWindow);
+  $("hook").disabled=true;
+  const good=marker>=64&&marker<=82;
+  if(!good){
+    state="idle";
+    $("cast").disabled=false;
+    $("line").hidden=true;
+    $("bubble").textContent="〰️";
+    resetFishAndBars();
+    msg("Quase! A fisgada não encaixou e o peixe escapou. Tente de novo.");
+    return;
+  }
+  state="fighting";
+  $("reel").disabled=false;
+  msg("Fisgou! Agora segure “Puxar linha” em toques curtos e controle a tensão.");
+  tension=25;
+  fightLoop();
+}
+function fightLoop(){
+  let phase=0;
+  function tick(){
+    if(state!=="fighting")return;
+    phase++;
+    fishPos+=Math.sin(phase/8)*.7;
+    fishPos=Math.max(5,Math.min(85,fishPos));
+    $("fish").style.left=fishPos+"%";
+    if(!$("reel").matches(":active"))tension=Math.max(12,tension-0.55);
+    if(tension>=100){
+      stop();
+      state="idle";
+      $("reel").disabled=true;
+      $("cast").disabled=false;
+      $("line").hidden=true;
+      $("bubble").textContent="〰️";
+      resetFishAndBars();
+      msg("A linha arrebentou! Na próxima, puxe em intervalos curtos.");
+      return;
+    }
+    $("tension").style.width=tension+"%";
+    $("tension").style.background=tension>75?"#df5a48":tension>50?"#e6a23c":"#35a86b";
+    raf=requestAnimationFrame(tick);
+  }
+  tick();
+}
+function reel(){
+  if(state!=="fighting")return;
+  tension=Math.min(100,tension+13);
+  if(fishPos>50)fishPos-=5;else fishPos-=3;
+  $("fish").style.left=Math.max(4,fishPos)+"%";
+  if(fishPos<=8){win();}
+}
+function win(){
+  state="idle";
+  stop();
+  $("reel").disabled=true;
+  $("cast").disabled=false;
+  $("line").hidden=true;
+  const f=fishTypes[Math.floor(Math.random()*fishTypes.length)];
+  score+=f.p;
+  count++;
+  best=Math.max(best,score);
+  stats();
+  $("fish").textContent=f.e;
+  $("bubble").textContent="✨";
+  msg("Você pescou: "+f.n+"! +"+f.p+" pontos. Parabéns!");
+  const row=document.createElement("div");
+  row.className="catch";
+  row.textContent=f.e+" "+f.n+" — "+f.p+" pontos";
+  $("collection").prepend(row);
+  setTimeout(()=>{
+    if(state==="idle"){
+      resetFishAndBars();
+      $("bubble").textContent="〰️";
+    }
+  },1200);
+}
+$("cast").addEventListener("click",cast);
+$("hook").addEventListener("click",hook);
+$("reel").addEventListener("click",reel);
+$("reset").addEventListener("click",()=>{score=0;count=0;stats();$("collection").innerHTML="";reset();});
 stats();reset();
 })();
 </script>
